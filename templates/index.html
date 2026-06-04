@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClickUp → Excel Exporter</title>
+  <style>
+    :root { --cu:#7b68ee; --cu-dark:#5a47c0; --bg:#f4f5f7; --ink:#1f2540; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; background:var(--bg);
+           color:var(--ink); display:flex; min-height:100vh; align-items:center;
+           justify-content:center; padding:24px; }
+    .card { background:#fff; width:100%; max-width:620px; border-radius:16px;
+            box-shadow:0 12px 40px rgba(40,40,90,.12); padding:36px 40px; }
+    h1 { margin:0 0 4px; font-size:22px; }
+    .sub { color:#6b7280; font-size:14px; margin:0 0 24px; }
+    label { font-weight:600; font-size:13px; display:block; margin-bottom:6px; }
+    input[type=text] { width:100%; padding:13px 14px; border:1.5px solid #d9dbe3;
+            border-radius:10px; font-size:14px; transition:border .15s; }
+    input[type=text]:focus { outline:none; border-color:var(--cu); }
+    .row { display:flex; gap:10px; margin-top:18px; }
+    button { flex:1; padding:13px; border:none; border-radius:10px; font-size:15px;
+             font-weight:600; cursor:pointer; transition:.15s; }
+    .primary { background:var(--cu); color:#fff; }
+    .primary:hover { background:var(--cu-dark); }
+    .ghost { background:#eef0f6; color:var(--ink); flex:0 0 auto; padding:13px 18px; }
+    .ghost:hover { background:#e3e6f0; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .msg { margin-top:20px; font-size:14px; border-radius:10px; padding:0; max-height:0;
+           overflow:hidden; transition:max-height .25s, padding .25s; }
+    .msg.show { padding:14px 16px; max-height:400px; }
+    .msg.info { background:#eef1fe; color:#3b3f7a; }
+    .msg.err  { background:#fdecec; color:#b3261e; }
+    .msg.ok   { background:#e8f7ee; color:#1b7a43; }
+    .stats { display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; }
+    .stat b { font-size:20px; display:block; }
+    .spinner { width:16px; height:16px; border:2.5px solid #ffffff80;
+               border-top-color:#fff; border-radius:50%; display:inline-block;
+               vertical-align:-3px; margin-right:8px; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .hint { font-size:12px; color:#9096a6; margin-top:8px; word-break:break-all; }
+    ul.sheets { margin:10px 0 0; padding-left:18px; color:#6b7280; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>📋 ClickUp → Excel</h1>
+    <p class="sub">วางลิงค์ Public Share ของ ClickUp แล้วกด Export เพื่อดึงทุก Task
+       (ทุก Field + Comment) ออกมาเป็นไฟล์ Excel</p>
+
+    <label for="url">ClickUp Public Link</label>
+    <input id="url" type="text" placeholder="https://sharing.clickup.com/.../gr/h/<viewId>/<token>"
+           autocomplete="off">
+    <div class="hint">รองรับลิงค์แชร์แบบ View สาธารณะ (sharing.clickup.com)</div>
+
+    <div class="row">
+      <button class="primary" id="btn-export">⬇️ Export เป็น Excel</button>
+      <button class="ghost" id="btn-preview">👁️ ดูตัวอย่าง</button>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const urlInput = $("url"), msg = $("msg");
+    const btnExport = $("btn-export"), btnPreview = $("btn-preview");
+
+    function show(type, html) {
+      msg.className = "msg show " + type;
+      msg.innerHTML = html;
+    }
+    function busy(on, who) {
+      btnExport.disabled = btnPreview.disabled = on;
+      if (on && who === "export")
+        btnExport.innerHTML = '<span class="spinner"></span>กำลังดึงข้อมูล...';
+      else btnExport.innerHTML = "⬇️ Export เป็น Excel";
+      if (on && who === "preview")
+        btnPreview.innerHTML = '<span class="spinner"></span>...';
+      else btnPreview.innerHTML = "👁️ ดูตัวอย่าง";
+    }
+
+    async function preview() {
+      const url = urlInput.value.trim();
+      if (!url) return show("err", "กรุณาใส่ลิงค์ก่อน");
+      busy(true, "preview");
+      show("info", '<span class="spinner" style="border-top-color:#3b3f7a;border-color:#3b3f7a40;border-top-color:#3b3f7a"></span>กำลังตรวจสอบลิงค์...');
+      try {
+        const r = await fetch("/preview", {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({url})
+        });
+        const d = await r.json();
+        if (!d.ok) return show("err", "❌ " + d.error);
+        show("ok",
+          `<b>✅ พบ View: ${d.view_name}</b>
+           <div class="stats">
+             <div class="stat"><b>${d.task_count}</b>Tasks</div>
+             <div class="stat"><b>${d.comment_count}</b>Comments</div>
+             <div class="stat"><b>${d.subtask_count}</b>Subtasks</div>
+             ${d.error_count ? `<div class="stat"><b>${d.error_count}</b>ดึงไม่ได้</div>` : ""}
+           </div>
+           <div class="hint">กด "Export เป็น Excel" เพื่อดาวน์โหลดไฟล์</div>`);
+      } catch (e) {
+        show("err", "❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: " + e.message);
+      } finally { busy(false); }
+    }
+
+    async function exportXlsx() {
+      const url = urlInput.value.trim();
+      if (!url) return show("err", "กรุณาใส่ลิงค์ก่อน");
+      busy(true, "export");
+      show("info", '<span class="spinner" style="border-color:#3b3f7a40;border-top-color:#3b3f7a"></span>กำลังดึงทุก Task และสร้างไฟล์ Excel... (อาจใช้เวลาสักครู่)');
+      try {
+        const r = await fetch("/export", {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({url})
+        });
+        if (!r.ok) {
+          const d = await r.json().catch(() => ({error: "เกิดข้อผิดพลาด"}));
+          return show("err", "❌ " + d.error);
+        }
+        const blob = await r.blob();
+        const tasks = r.headers.get("X-Task-Count");
+        const dispo = r.headers.get("Content-Disposition") || "";
+        const fname = (dispo.match(/filename="?([^"]+)"?/) || [])[1] || "clickup_export.xlsx";
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = fname;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        show("ok", `✅ ดาวน์โหลดสำเร็จ — ${tasks} tasks<br><span class="hint">${fname}</span>`);
+      } catch (e) {
+        show("err", "❌ " + e.message);
+      } finally { busy(false); }
+    }
+
+    btnExport.addEventListener("click", exportXlsx);
+    btnPreview.addEventListener("click", preview);
+    urlInput.addEventListener("keydown", (e) => { if (e.key === "Enter") exportXlsx(); });
+  </script>
+</body>
+</html>
