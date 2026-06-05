@@ -1,13 +1,19 @@
 """
 ClickUp Public-Share -> Excel exporter (web UI).
 
-Run:  python app.py   ->  open http://127.0.0.1:5000
+Run:  python app.py            -> open http://127.0.0.1:5000
+Or run the packaged clickup-scraper.exe (browser opens automatically).
 """
 from __future__ import annotations
 
 import io
+import os
 import re
+import socket
+import sys
+import threading
 import time
+import webbrowser
 from datetime import datetime
 
 from flask import (Flask, Response, jsonify, render_template, request,
@@ -16,7 +22,14 @@ from flask import (Flask, Response, jsonify, render_template, request,
 from exporter import build_workbook
 from scraper import ScrapeError, scrape
 
-app = Flask(__name__)
+
+def _resource_path(rel: str) -> str:
+    """Resolve a bundled resource path (works both as script and frozen exe)."""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, rel)
+
+
+app = Flask(__name__, template_folder=_resource_path("templates"))
 
 
 def _safe_filename(name: str) -> str:
@@ -84,5 +97,31 @@ def preview():
     )
 
 
+def _pick_port(preferred: int = 5000) -> int:
+    """Use the preferred port if free, otherwise let the OS pick one."""
+    for port in (preferred, 0):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind(("127.0.0.1", port))
+                return s.getsockname()[1]
+        except OSError:
+            continue
+    return preferred
+
+
+def main():
+    port = _pick_port(5000)
+    url = f"http://127.0.0.1:{port}"
+    # Open the browser shortly after the server starts.
+    threading.Timer(1.2, lambda: webbrowser.open(url)).start()
+    print("=" * 56)
+    print("  ClickUp -> Excel Exporter")
+    print(f"  เปิดใช้งานที่: {url}")
+    print("  ปิดโปรแกรม: กดปิดหน้าต่างนี้ หรือ Ctrl+C")
+    print("=" * 56)
+    app.run(host="127.0.0.1", port=port, debug=False)
+
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    main()

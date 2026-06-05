@@ -32,6 +32,23 @@ py -3.13 -m venv .venv
 เปิดเบราว์เซอร์ไปที่ <http://127.0.0.1:5000> → วางลิงค์ → กด **Export เป็น Excel**
 (ปุ่ม **ดูตัวอย่าง** จะบอกจำนวน task/comment ที่จะได้ก่อนดาวน์โหลด)
 
+## สร้างไฟล์ .exe (รันบนเครื่องอื่นที่ไม่มี Python)
+
+ดับเบิลคลิก `build_exe.bat` หรือสั่ง:
+
+```powershell
+.venv\Scripts\python.exe -m PyInstaller --noconfirm --onefile `
+  --name clickup-scraper --add-data "templates;templates" `
+  --collect-submodules openpyxl --hidden-import openpyxl.cell._writer app.py
+```
+
+จะได้ไฟล์เดียว **`dist\clickup-scraper.exe`** (~13 MB) — ก๊อปไฟล์นี้ไปวางบน
+Windows เครื่องไหนก็ได้แล้วดับเบิลคลิก เปิดเบราว์เซอร์ให้อัตโนมัติที่
+<http://127.0.0.1:5000> (ถ้า port 5000 ไม่ว่างจะเลือก port อื่นให้เอง)
+ปิดโปรแกรมโดยปิดหน้าต่าง console สีดำ
+
+> ไม่ต้องติดตั้ง Python หรืออะไรเพิ่มบนเครื่องปลายทาง — ทุกอย่างรวมอยู่ในไฟล์ .exe แล้ว
+
 ## ใช้งานแบบ command line
 
 ```powershell
