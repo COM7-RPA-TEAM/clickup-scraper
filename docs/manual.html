@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือ ClickUp → Excel Exporter</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: "Tahoma", "Leelawadee UI", "Sarabun", sans-serif;
+    color: #232838; font-size: 13px; line-height: 1.7; margin: 0;
+  }
+  h1,h2,h3 { line-height: 1.35; }
+  code, .mono { font-family: "Consolas","Courier New",monospace; }
+
+  /* ---- cover ---- */
+  .cover {
+    height: 247mm; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    background: linear-gradient(135deg,#7b68ee 0%,#5a47c0 100%);
+    color: #fff; border-radius: 14px; padding: 40px;
+    page-break-after: always;
+  }
+  .cover .badge { font-size: 70px; margin-bottom: 10px; }
+  .cover h1 { font-size: 40px; margin: 0 0 6px; font-weight: 700; }
+  .cover .sub { font-size: 18px; opacity: .92; margin: 0 0 36px; }
+  .cover .meta {
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 10px; padding: 16px 28px; font-size: 14px; line-height: 2;
+  }
+  .cover .foot { position: absolute; bottom: 24mm; font-size: 12px; opacity:.8; }
+
+  /* ---- sections ---- */
+  section { page-break-inside: avoid; }
+  h2 {
+    font-size: 21px; color: #5a47c0; margin: 26px 0 10px;
+    padding-bottom: 6px; border-bottom: 2.5px solid #ece9fb;
+  }
+  h2 .n {
+    display: inline-block; background: #7b68ee; color: #fff; font-size: 15px;
+    width: 27px; height: 27px; line-height: 27px; text-align: center;
+    border-radius: 7px; margin-right: 9px; vertical-align: 2px;
+  }
+  h3 { font-size: 15.5px; color: #2d2a52; margin: 18px 0 6px; }
+  p { margin: 6px 0; }
+  ul,ol { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin: 3px 0; }
+
+  .lead { color:#555b6e; font-size:13.5px; }
+
+  pre {
+    background: #f5f6fb; border: 1px solid #e3e4f0; border-left: 4px solid #7b68ee;
+    border-radius: 8px; padding: 11px 14px; font-size: 12px; overflow: hidden;
+    white-space: pre-wrap; word-break: break-all; margin: 8px 0;
+  }
+  code.inl {
+    background: #eef0f8; padding: 1.5px 6px; border-radius: 5px;
+    font-size: 12px; color: #5a47c0;
+  }
+
+  .box { border-radius: 9px; padding: 12px 15px; margin: 12px 0; font-size: 12.5px; }
+  .box b { display:block; margin-bottom:3px; }
+  .tip  { background:#eef7f0; border:1px solid #cce8d4; }
+  .warn { background:#fdf4e7; border:1px solid #f3dcb4; }
+  .info { background:#eef1fe; border:1px solid #d4daf8; }
+
+  table { width:100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+  th { background:#5a47c0; color:#fff; text-align:left; padding:8px 10px; font-weight:600; }
+  td { border:1px solid #e2e4ee; padding:7px 10px; vertical-align:top; }
+  tr:nth-child(even) td { background:#f8f8fc; }
+
+  .step { display:flex; gap:11px; margin:10px 0; align-items:flex-start; }
+  .step .num {
+    flex:0 0 26px; height:26px; background:#7b68ee; color:#fff; border-radius:50%;
+    text-align:center; line-height:26px; font-weight:700; font-size:13px;
+  }
+  .step .txt { flex:1; }
+  .step .txt b { color:#2d2a52; }
+
+  .pill { display:inline-block; background:#ece9fb; color:#5a47c0; border-radius:20px;
+          padding:2px 11px; font-size:11.5px; margin:2px 4px 2px 0; }
+  hr { border:none; border-top:1px dashed #d9dbe7; margin:18px 0; }
+  .footer-note { color:#9096a6; font-size:11px; text-align:center; margin-top:26px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<div class="cover">
+  <div class="badge">📋</div>
+  <h1>ClickUp → Excel Exporter</h1>
+  <p class="sub">คู่มือการติดตั้งและการใช้งาน</p>
+  <div class="meta">
+    ดึงข้อมูลทุก Task จากลิงค์ ClickUp Public Share<br>
+    ครบทุก Field และ Comment &nbsp;→&nbsp; ไฟล์ Excel<br>
+    <span style="opacity:.8">เวอร์ชัน 1.0</span>
+  </div>
+  <div class="foot">COM7 RPA TEAM</div>
+</div>
+
+<!-- ===================== 1. ภาพรวม ===================== -->
+<section>
+<h2><span class="n">1</span>โปรแกรมนี้ทำอะไร</h2>
+<p class="lead">โปรแกรมช่วยดึงข้อมูลงาน (Task) ทั้งหมดจาก <b>ลิงค์แชร์สาธารณะของ ClickUp</b>
+(เว็บ <code class="inl">sharing.clickup.com</code>) ออกมาเป็นไฟล์ Excel โดยอัตโนมัติ
+ได้ครบทุกข้อมูลในแต่ละ Task ไม่ใช่แค่คอลัมน์ที่เห็นในตาราง</p>
+
+<ul>
+  <li>ดึงได้ <b>ทุก Field</b> ของแต่ละ Task — รายละเอียดงาน (Description), สถานะ, ความสำคัญ,
+      ผู้รับผิดชอบ, ป้ายกำกับ (Tags), วันที่ต่าง ๆ ฯลฯ</li>
+  <li>ดึง <b>Comment</b> ทั้งหมดในแต่ละ Task พร้อมชื่อผู้เขียนและวันที่</li>
+  <li>ดึง <b>Subtask, Checklist และไฟล์แนบ (Attachments)</b></li>
+  <li><b>ไม่ต้อง</b> Login, ไม่ต้องใช้ API Token, ไม่ต้องเป็นสมาชิก ClickUp</li>
+  <li>เป็นการ <b>อ่านข้อมูลอย่างเดียว</b> (read-only) ไม่มีการแก้ไขข้อมูลใน ClickUp</li>
+</ul>
+
+<div class="box info">
+  <b>ต้องใช้ลิงค์แบบไหน?</b>
+  ลิงค์ต้องเป็นแบบ <b>แชร์ View สาธารณะ</b> ที่มีหลายงานอยู่ในนั้น เช่น<br>
+  <code class="inl">https://sharing.clickup.com/90181817581/gr/h/2kzm2n7d-838/733f5c627a0c424</code>
+</div>
+</section>
+
+<!-- ===================== 2. ติดตั้ง (exe) ===================== -->
+<section>
+<h2><span class="n">2</span>การติดตั้ง (แบบง่าย — ใช้ไฟล์ .exe)</h2>
+<p class="lead">วิธีนี้เหมาะกับการนำไปใช้บนเครื่องอื่น <b>ไม่ต้องติดตั้ง Python หรืออะไรเพิ่มเลย</b></p>
+
+<div class="step"><div class="num">1</div><div class="txt">
+  <b>คัดลอกไฟล์</b> <code class="inl">clickup-scraper.exe</code> ไปวางไว้ที่ใดก็ได้บนเครื่อง
+  Windows ปลายทาง (เช่น Desktop หรือสร้างโฟลเดอร์ใหม่)
+</div></div>
+
+<div class="step"><div class="num">2</div><div class="txt">
+  <b>ดับเบิลคลิก</b> ที่ไฟล์ <code class="inl">clickup-scraper.exe</code> เพื่อเปิดโปรแกรม
+</div></div>
+
+<div class="step"><div class="num">3</div><div class="txt">
+  จะมี <b>หน้าต่างสีดำ (Console)</b> เด้งขึ้นมา และโปรแกรมจะ <b>เปิดเว็บเบราว์เซอร์ให้อัตโนมัติ</b>
+  ที่หน้า <code class="inl">http://127.0.0.1:5000</code>
+</div></div>
+
+<div class="box warn">
+  <b>⚠️ Windows แจ้งเตือนความปลอดภัย?</b>
+  ครั้งแรกที่เปิด Windows อาจขึ้นหน้าจอ “Windows protected your PC” (SmartScreen)
+  เนื่องจากไฟล์ยังไม่ได้เซ็นรับรอง — ให้กด <b>“More info”</b> แล้วกด <b>“Run anyway”</b>
+  เพื่อเปิดโปรแกรม (เปิดได้ปลอดภัย เพราะเป็นไฟล์ที่เราสร้างเอง)
+</div>
+
+<div class="box tip">
+  <b>✔ หากหน้าต่างโดน Antivirus บล็อก</b>
+  ให้เพิ่มไฟล์ <code class="inl">clickup-scraper.exe</code> เป็นข้อยกเว้น (Exclusion / Allow)
+  ในโปรแกรมแอนตี้ไวรัส ไฟล์ที่แพ็กด้วย PyInstaller บางครั้งถูกแจ้งเตือนเกินจริง
+</div>
+</section>
+
+<!-- ===================== 3. ติดตั้ง (source) ===================== -->
+<section>
+<h2><span class="n">3</span>การติดตั้ง (สำหรับนักพัฒนา — รันจากซอร์สโค้ด)</h2>
+<p class="lead">ใช้เมื่อต้องการแก้ไขโปรแกรม หรือสร้างไฟล์ .exe ขึ้นใหม่ — ต้องมี
+<b>Python 3.13</b> บนเครื่อง</p>
+
+<h3>3.1 เตรียมระบบและติดตั้งไลบรารี</h3>
+<pre>cd clickup-scraper
+py -3.13 -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt</pre>
+
+<h3>3.2 รันโปรแกรม</h3>
+<pre>.venv\Scripts\python.exe app.py</pre>
+<p>จากนั้นเปิดเบราว์เซอร์ไปที่ <code class="inl">http://127.0.0.1:5000</code></p>
+
+<h3>3.3 สร้างไฟล์ .exe ขึ้นใหม่</h3>
+<p>ดับเบิลคลิกไฟล์ <code class="inl">build_exe.bat</code> หรือสั่ง:</p>
+<pre>.venv\Scripts\python.exe -m PyInstaller --noconfirm --onefile ^
+  --name clickup-scraper --add-data "templates;templates" ^
+  --collect-submodules openpyxl --hidden-import openpyxl.cell._writer app.py</pre>
+<p>ไฟล์ที่ได้จะอยู่ที่ <code class="inl">dist\clickup-scraper.exe</code></p>
+</section>
+
+<!-- ===================== 4. วิธีใช้งาน ===================== -->
+<section>
+<h2><span class="n">4</span>วิธีใช้งาน</h2>
+
+<div class="step"><div class="num">1</div><div class="txt">
+  <b>คัดลอกลิงค์ Public Share จาก ClickUp</b><br>
+  ใน ClickUp เปิด View ที่ต้องการ → กด <b>Share</b> → เปิด <b>Public sharing</b> →
+  คัดลอกลิงค์ (ขึ้นต้นด้วย <code class="inl">https://sharing.clickup.com/...</code>)
+</div></div>
+
+<div class="step"><div class="num">2</div><div class="txt">
+  <b>วางลิงค์ลงในช่อง</b> “ClickUp Public Link” บนหน้าโปรแกรม
+</div></div>
+
+<div class="step"><div class="num">3</div><div class="txt">
+  (ไม่บังคับ) กดปุ่ม <b>👁️ ดูตัวอย่าง</b> เพื่อตรวจสอบก่อนว่าจะได้กี่ Task / กี่ Comment
+</div></div>
+
+<div class="step"><div class="num">4</div><div class="txt">
+  กดปุ่ม <b>⬇️ Export เป็น Excel</b> → รอสักครู่ → ไฟล์ Excel
+  จะถูก <b>ดาวน์โหลดอัตโนมัติ</b> (อยู่ในโฟลเดอร์ Downloads ตามปกติ)
+</div></div>
+
+<div class="step"><div class="num">5</div><div class="txt">
+  <b>ปิดโปรแกรม</b> เมื่อใช้งานเสร็จ โดยปิดหน้าต่างสีดำ (Console) หรือกด
+  <code class="inl">Ctrl + C</code> ในหน้าต่างนั้น
+</div></div>
+
+<div class="box info">
+  <b>ใช้เวลานานไหม?</b>
+  ขึ้นกับจำนวน Task และ Comment — โดยทั่วไปหลักสิบ Task ใช้เวลาเพียงไม่กี่วินาที
+  ระหว่างดึงข้อมูลปุ่มจะแสดงสถานะ “กำลังดึงข้อมูล...”
+</div>
+</section>
+
+<!-- ===================== 5. ไฟล์ Excel ===================== -->
+<section>
+<h2><span class="n">5</span>ข้อมูลในไฟล์ Excel ที่ได้</h2>
+<p class="lead">ไฟล์ Excel 1 ไฟล์จะมี <b>5 ชีต (Sheet)</b> แยกตามประเภทข้อมูล
+วันเวลาทั้งหมดแปลงเป็นเขตเวลาไทย (UTC+7) เรียบร้อยแล้ว</p>
+
+<table>
+  <tr><th style="width:120px">ชีต</th><th>เนื้อหา</th></tr>
+  <tr><td><b>Tasks</b></td><td>1 แถวต่อ 1 งาน — รหัส, ชื่องาน, สถานะ, ความสำคัญ, ผู้รับผิดชอบ,
+      Tags, วันที่ทั้งหมด (สร้าง/แก้ไข/กำหนดส่ง/ปิดงาน), ผู้สร้าง, เวลาที่ประเมิน,
+      จำนวน comment/ไฟล์แนบ/subtask, <b>รายละเอียดงานแบบเต็ม</b>, งานแม่, List/Project,
+      ลิงค์เปิดงาน และ Custom Fields (ถ้ามี)</td></tr>
+  <tr><td><b>Comments</b></td><td>1 แถวต่อ 1 ความคิดเห็น — งานที่เกี่ยวข้อง, ผู้เขียน, วันที่,
+      ข้อความเต็ม, จำนวนการตอบกลับ, อีโมจิ (reactions)</td></tr>
+  <tr><td><b>Subtasks</b></td><td>งานย่อยทั้งหมด พร้อมสถานะ ผู้รับผิดชอบ และกำหนดส่ง</td></tr>
+  <tr><td><b>Checklists</b></td><td>รายการเช็กลิสต์ในแต่ละงาน พร้อมสถานะติ๊กเสร็จ</td></tr>
+  <tr><td><b>Attachments</b></td><td>ไฟล์แนบทั้งหมด พร้อมชนิดไฟล์ ขนาด วันอัปโหลด และลิงค์ดาวน์โหลด</td></tr>
+</table>
+</section>
+
+<!-- ===================== 6. ปัญหาที่พบบ่อย ===================== -->
+<section>
+<h2><span class="n">6</span>ปัญหาที่พบบ่อย และวิธีแก้</h2>
+<table>
+  <tr><th style="width:42%">อาการ</th><th>วิธีแก้</th></tr>
+  <tr><td>ขึ้นว่า “ลิงค์นี้ไม่ใช่ลิงค์ของ ClickUp”</td>
+      <td>ตรวจว่าวางลิงค์ครบถ้วน และเป็นลิงค์จาก <code class="inl">sharing.clickup.com</code></td></tr>
+  <tr><td>ขึ้นว่า “รูปแบบลิงค์ไม่ถูกต้อง”</td>
+      <td>ต้องเป็นลิงค์แชร์แบบ <b>View</b> (มีหลายงาน) ไม่ใช่ลิงค์งานเดี่ยวหรือ Doc</td></tr>
+  <tr><td>ขึ้นว่า “ไม่พบ View นี้ หรือลิงค์หมดอายุ”</td>
+      <td>ให้เจ้าของ View เปิด Public sharing อีกครั้ง แล้วคัดลอกลิงค์ใหม่</td></tr>
+  <tr><td>เบราว์เซอร์ไม่เปิดอัตโนมัติ</td>
+      <td>เปิดเบราว์เซอร์เองแล้วพิมพ์ <code class="inl">http://127.0.0.1:5000</code>
+          (หรือดู Port ที่โปรแกรมแจ้งในหน้าต่างสีดำ)</td></tr>
+  <tr><td>Windows / Antivirus บล็อกไฟล์ .exe</td>
+      <td>กด “More info → Run anyway” หรือเพิ่มไฟล์เป็นข้อยกเว้นในแอนตี้ไวรัส</td></tr>
+  <tr><td>ไฟล์ Excel ไม่ดาวน์โหลด</td>
+      <td>ตรวจการตั้งค่าเบราว์เซอร์ว่าไม่ได้บล็อกการดาวน์โหลด และดูในโฟลเดอร์ Downloads</td></tr>
+</table>
+
+<hr>
+<p class="footer-note">ClickUp → Excel Exporter • คู่มือการใช้งาน • COM7 RPA TEAM<br>
+ที่เก็บโค้ด: github.com/COM7-RPA-TEAM/clickup-scraper</p>
+</section>
+
+</body>
+</html>
